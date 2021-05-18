@@ -317,8 +317,62 @@ ggplot() +
 ---
 
 ```{r}
-ggplot(data = midwest, mapping= aes(x = percblack, y = percchildbelowpovert)) + 
-  geom_point() +
-  geom_rug(col = rgb(.5,0,0, alpha = .2))
 
+library(ggExtra)
+library(ggplot2)
+
+fig <- ggplot(data = midwest, mapping= aes(x = percblack, y = percchildbelowpovert, color = as.factor(state)))  + 
+  geom_point() +
+  #scale_color_discrete(name = 'State', 
+   #                  labels = c('Statename1','Statename2')) +
+  theme(legend.position = 'left') +
+  labs( x = 'Black population (%)',
+        y = 'Child poverty (%)',
+        title = 'Child poverty and black population in the metro area') +
+  theme_minimal()
+
+
+#geom_rug(col = rgb(.5,0,0, alpha = .2)) +
+ggMarginal(fig,
+             type = 'density', groupColour =TRUE) 
+  
+```
+
+
+```{r}
+newmidwest <- filter(midwest, 
+                     (popwhite < 2000000 ) & 
+                     (percbelowpoverty < 40 ) & 
+                    (( state == 'IN') || (state == 'IL')))
+
+ggplot() +
+  geom_point(data = newmidwest, mapping = aes(x= percbelowpoverty, y = popwhite, color = 'blue')) +
+  geom_point(data = newmidwest, mapping = aes(x= percbelowpoverty, y = popblack, color = 'red')) +
+  geom_point(data = newmidwest, mapping = aes(x= percbelowpoverty, y = popamerindian , color = 'green')) +
+  scale_color_discrete(name = 'Ethnic population', 
+                     labels = c('White','Black', 'American Indian')) +
+  theme_minimal()
+```
+
+```{r}
+
+
+
+ggplot(data = newmidwest, mapping = aes(x= percbelowpoverty, color = 'blue')) + 
+  geom_bar
+
+```
+
+```{r}
+il_in <- c("OH", "MI")
+ggplot(data = subset(midwest, subset = state %in% il_in),
+            mapping = aes(x = percchildbelowpovert, fill = state)) +
+    geom_density(alpha = 0.4, bins = 20) +
+  theme_minimal() + 
+  labs(x = 'Child Poverty (%)',
+       y = 'Density',
+       title = 'Child poverty in Michigan and Ohio') + 
+  scale_fill_brewer(palette = 'Dark2') +
+  scale_fill_discrete(name = 'State', 
+          labels = c('Michigan','Ohio')) 
 ```
