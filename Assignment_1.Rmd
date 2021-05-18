@@ -22,10 +22,11 @@ df <- read_csv('winequality-red.csv')
 We filter out an outlier that impacted the line we plotted. It made the error much bigger and the line quite a bit steeper. Without it, the line is flatter.
 Because one point shouldn't have that much impact on a plot, we removed it.
 ```{r}
-df <- filter(df, `volatile acidity` < 1.4 )
+#df <- filter(df, `alcohol` < 14.5 )
 Plot1 <- ggplot(data = df,
                     mapping = aes(x = `volatile acidity`, y = quality)) +
   geom_smooth() +
+  geom_point() + 
   theme_minimal()
 Plot1
 
@@ -48,7 +49,7 @@ ggplot(df, mapping = aes( y = `alcohol`, x = `volatile acidity`, color = as.fact
 
 Here we create a simple linear regression.
 ```{r}
-model <- lm(df$quality ~ df$alcohol + df$`density` + df$alcohol * df$`density` )
+model <- lm(df$quality ~ df$alcohol + df$`volatile acidity` + df$alcohol * df$`volatile acidity` )
 summary(model)
 
 ```
