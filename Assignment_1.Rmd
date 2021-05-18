@@ -3,37 +3,57 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+This notebook is created to answer all questions in Assignment 1 of the course Data Analaysis and Visualisation. It's made by Cedric Gevers and Vivian van Oosten (group 3). 
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+First we load the necessary libraries. 
 ```{r}
 library(tidyverse)
 library(ggplot2)
 library(viridis)
+library(scales)
 ```
 
-
+Reading in the dataframe.
 ```{r}
 df <- read_csv('winequality-red.csv')
 ```
 
+We filter out an outlier that impacted the line we plotted. It made the error much bigger and the line quite a bit steeper. Without it, the line is flatter.
+Because one point shouldn't have that much impact on a plot, we removed it.
 ```{r}
-ggplot(df, mapping = aes( y = `alcohol`, x = `volatile acidity`, color = quality)) +
+df <- filter(df, `volatile acidity` < 1.4 )
+Plot1 <- ggplot(data = df,
+                    mapping = aes(x = `volatile acidity`, y = quality)) +
+  geom_smooth() +
+  theme_minimal()
+Plot1
+
+```
+
+
+Here we plot two of the variables that could have an impact on the 
+```{r}
+ggplot(df, mapping = aes( y = `alcohol`, x = `volatile acidity`, color = as.factor(quality))) +
   geom_point() +
-  scale_color_discrete(name = 'Quality') +
-  scale_color_viridis() +
+  scale_color_viridis_d(name = 'Quality') +
+  labs(
+    y = 'Alchol (%)',
+    x = 'Volatile Acidity',
+    title = 'Effect of Alcohol and Volatile Acidity on Quality of Red Wine'
+  ) +
   theme_minimal()
 
 ```
 
-simple linear regression
+Here we create a simple linear regression.
 ```{r}
 model <- lm(df$quality ~ df$alcohol + df$`density` + df$alcohol * df$`density` )
 summary(model)
 
 ```
 
-
+We already try to implement the Ridge Regression.
 ```{r}
 library(glmnet)
 y <- df$quality
