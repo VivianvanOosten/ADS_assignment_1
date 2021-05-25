@@ -1,7 +1,10 @@
+
 ---
 title: "R Notebook"
 output: html_notebook
 ---
+
+This notebook is created to answer all questions in Assignment 1 of the course Data Analaysis and Visualisation. It's made by Cedric Gevers and Vivian van Oosten (group 3). 
 
 This notebook is created to answer all questions in Assignment 1 of the course Data Analaysis and Visualisation. It's made by Cedric Gevers and Vivian van Oosten (group 3). 
 
@@ -12,30 +15,27 @@ library(tidyverse)
 library(ggplot2)
 library(viridis)
 library(scales)
+library(dplyr)
+library(magrittr)
+library(mvtnorm)
+library(ISLR)
+set.seed(123)
 ```
 
 Reading in the dataframe.
 ```{r}
-df <- read_csv('winequality-red.csv')
+wine  <- read.csv('winequality-red.csv')
+wine. <- read_csv('winequality-red.csv')
+show(wine)
 ```
 
 We filter out an outlier that impacted the line we plotted. It made the error much bigger and the line quite a bit steeper. Without it, the line is flatter.
 Because one point shouldn't have that much impact on a plot, we removed it.
-```{r}
-#df <- filter(df, `alcohol` < 14.5 )
-Plot1 <- ggplot(data = df,
-                    mapping = aes(x = `volatile acidity`, y = quality)) +
-  geom_smooth() +
-  geom_point() + 
-  theme_minimal()
-Plot1
-
-```
 
 
 Here we plot two of the variables that could have an impact on the 
 ```{r}
-ggplot(df, mapping = aes( y = `alcohol`, x = `volatile acidity`, color = as.factor(quality))) +
+ggplot(wine. , mapping = aes( y = `alcohol`, x = `volatile acidity`, color = as.factor(quality))) +
   geom_point() +
   scale_color_viridis_d(name = 'Quality') +
   labs(
@@ -47,25 +47,167 @@ ggplot(df, mapping = aes( y = `alcohol`, x = `volatile acidity`, color = as.fact
 
 ```
 
-Here we create a simple linear regression.
 ```{r}
-model <- lm(df$quality ~ df$alcohol + df$`volatile acidity` + df$alcohol * df$`volatile acidity` )
-summary(model)
+nrow(wine)
+wine_true <- wine %>% filter(!is.na(quality))
+nrow(wine_true)
+```
+# we can see that there are no missing values for wine$qaulity so we can use our original wine data set
+
+# now we are going to spilt our wine dataset in train(50%) vailid (30%) and test(20%)
+```{r}
+
+split <- c(rep("train", 800), rep("valid", 480), rep("test",  319))
+wine <- wine  %>% mutate(split = sample(split))
+
+wine_train <- wine %>% filter(split == "train")
+wine_valid <- wine %>% filter(split == "valid")
+wine_test  <- wine %>% filter(split == "test")
+
+
+
+#wine_train <- wine %>% slice(1:800)
+#wine_valid <- wine %>% slice(801:1281)
+#wine_test  <- wine %>% slice(1281:1599)
+```
+
+
+
+
+```{r}
+
+ggplot() + 
+  geom_bar(data = wine_train, mapping = aes(x = (quality), stat = 'count'  , colour = "train",   ), alpha = 0.3 ) + 
+  geom_bar(data = wine_valid, mapping = aes(x = (quality), stat = 'count'  , colour = "valid",   ), alpha = 0.3 ) + 
+  geom_bar(data = wine_test,  mapping = aes(x = (quality), stat = 'count'  , colour = "test" ,   ), alpha = 0.3 ) +
+  scale_colour_manual("Type data", breaks = c("train", "valid", "test"),values = c("blue", "red", "orange"))
+  
+  
+  
+ggplot()+
+  geom_bar(data = wine, mapping = aes(x = quality))
+
+  
+```
+
+
+# function from lab 4
+```{r}
+lm_mse <- function(formula, train_data, valid_data) {
+  y_name <- as.character(formula)[2]
+  y_true <- valid_data[[y_name]]
+  
+  lm_fit <- lm(formula, train_data)
+  y_pred <- predict(lm_fit, newdata = valid_data)
+  
+  mean((y_true - y_pred)^2)
+}
+```
+
+
+# Using lm_mse function to test the mse of our model
+```{r}
+lm_mse(quality ~ fixed.acidity + total.sulfur.dioxide, wine_train, wine_valid)
+summary(wine)
+
+str(wine)
+ls(wine)
+
+```
+# this is a very low mse what indicates that our model has a low "mean squared error" 
+
+```{r}
+source("generate_formulas.R")
+```
+
+
+```{r}
+wine <- select(wine, -split)
+x_vars <- colnames(wine)
+x_vars <- x_vars[x_vars != "quality"]
+```
+
+```{r}
+formulas <- generate_formulas(p = 3, x_vars = x_vars, y_var = "quality")
+len <- length(formulas)
+
+```
+# Use a for loop to find the best set of 3 predictors in the wine dataset based on MSE. Use the wine_train and wine_valid datasets.
+```{r}
+# Initialise a vector we will fill with MSE values
+mses_3 <- rep(0, len)
+
+# loop over all the formulas
+for (i in 1:len) {
+  mses_3[i] <- lm_mse(as.formula(formulas[i]), wine_train, wine_valid)
+}
+
+# select the formula with the lowest MSE
+best_3_preds <- formulas[which.min(mses_3)]
+best_3_preds
+```
+# we do the same for 1,2 and 4 predictors.
+
+```{r}
+# generate formulas
+formulas_1 <- generate_formulas(p = 1, x_vars = x_vars, y_var = "quality")
+formulas_2 <- generate_formulas(p = 2, x_vars = x_vars, y_var = "quality")
+formulas_4 <- generate_formulas(p = 4, x_vars = x_vars, y_var = "quality")
+
+# Initialise a vector we will fill with MSE values
+mses_1 <- rep(0, length(formulas_1))
+mses_2 <- rep(0, length(formulas_2))
+mses_4 <- rep(0, length(formulas_4))
+
+# loop over all the formulas
+for (i in 1:length(formulas_1)) {
+  mses_1[i] <- lm_mse(as.formula(formulas_1[i]), wine_train, wine_valid)
+}
+
+for (i in 1:length(formulas_2)) {
+  mses_2[i] <- lm_mse(as.formula(formulas_2[i]), wine_train, wine_valid)
+}
+
+for (i in 1:length(formulas_4)) {
+  mses_4[i] <- lm_mse(as.formula(formulas_4[i]), wine_train, wine_valid)
+}
+
+# Compare mses
+min(mses_1)
+min(mses_2)
+min(mses_3)
+min(mses_4)
+
+# min(mses_4) is lowest of them all!
+# So let's see which model that is
+
+formulas_4[which.min(mses_4)]
 
 ```
 
-We already try to implement the Ridge Regression.
+
 ```{r}
-library(glmnet)
-y <- df$quality
-x <- data.matrix(df[, c('alcohol','density','volatile acidity', 'pH')])
+# Estimate model and calculate mse
+lm_best <- lm(quality ~ volatile.acidity + chlorides + sulphates + alcohol, data = wine_test)
+mse <- function(y_true, y_pred) mean((y_true - y_pred)^2)
+mse(wine_test$quality, predict(lm_best, newdata = wine_test))
+```
 
-model <- glmnet(x, y, alpha = 0)
-summary(model)
-
+```{r}
+# create a plot
+tibble(
+  y_true = wine_test$quality,
+  y_pred = predict(lm_best, newdata = wine_test)
+) %>% 
+  ggplot(aes(x = y_pred, y = y_true)) +
+  geom_abline(slope = 1, intercept = 0, lty = 2) +
+  geom_count() +
+  theme_minimal()
 ```
 
 
 
 
 
+
+>>>>>>> Stashed changes
