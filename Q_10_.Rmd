@@ -1,0 +1,64 @@
+---
+title: "Practical 2 Worksheet"
+output: html_document
+---
+
+Use this workspace to complete the Visualization Practical. 
+Vivian van Oosten
+Cedric Gevers 80051003
+
+
+---
+
+Load packages in the local library:
+```{r}
+library(tidyverse)
+library(ghibli)
+
+```
+
+We used the midwest data set and wanted to know what the % below poverty was. 
+the fist step was looking at the data set and selecting the parameters used for our visualisation. 
+
+```{r}
+summary(midwest)
+show(midwest)
+```
+
+
+Subsett is made for Michagan and Ohio
+```{r}
+il_in <- c("MI", "OH")
+```
+
+In the graph below we used the histogram function to compare MI and OH to each other
+```{r}
+p <- ggplot(data = subset(midwest, subset = state %in% il_in),
+            mapping = aes(x = percbelowpoverty, fill = state))
+p + geom_histogram(alpha = 0.4, bin = 30)+
+scale_fill_brewer(palette = 'Dark2', direction = 10)+
+scale_color_discrete(name = 'State',
+labels = c('Statename1','Statename2')) 
+
+
+```
+
+ Our final graph is a density plot of MI and OH where its easy to see the differance between the 2. Now you can clearly see that the citys in Michigan have a higher child poverty rate than Ohio. 
+
+```{r}
+
+    
+il_in <- c("OH", "MI")
+ggplot(data = subset(midwest, subset = state %in% il_in),
+mapping = aes(x = percchildbelowpovert, fill = state)) +
+geom_density(alpha = 0.4, bins = 30) +
+theme_minimal() +
+labs(x = 'Child Poverty (%)',
+y = 'Density', title = "Density plot of Michigan and Ohio") +
+scale_fill_brewer(palette = 'Dark2') +
+scale_color_discrete(name = 'State',
+labels = c('Michigan','Ohio'))
+
+
+```
+
