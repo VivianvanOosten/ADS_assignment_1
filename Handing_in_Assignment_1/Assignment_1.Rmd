@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "Assignment 1 - Wine Quality"
 output: html_notebook
 ---
 
@@ -24,7 +24,7 @@ set.seed(123)
 
 We read in the dataframe. 
 ```{r}
-wine  <- read.csv('winequality-red.csv')
+wine  <- read.csv('data/winequality-red.csv')
 show(wine)
 ```
 
